@@ -16,6 +16,14 @@
                '-pedantic'],
     'sources': [
       'src/can.cc',
+      'src/runtime.cc',
+      'src/bindings/can.cc'
+    ]
+  }, {
+    'target_name': 'can2c',
+    'type': 'executable',
+    'sources': [
+      'tools/can2c.cc'
     ]
   }]
 }

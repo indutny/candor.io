@@ -1,1 +1,3 @@
 out/
+tools/can2c
+src/bindings/*.cc
