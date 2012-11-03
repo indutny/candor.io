@@ -1,0 +1,36 @@
+// FS module
+exports = {}
+fs = global._bindings.fs
+buffer = global._bindings.buffer
+
+exports.readFileSync = (filename) {
+  fd = fs.open(filename, fs.flags.O_RDONLY, 438)
+
+  stat = fs.stat(filename)
+  if (stat == nil) return
+
+  size = stat.size
+  buffs = []
+  buff_len = 0
+  total = 0
+  while (size > 0) {
+    buff = buffer.new(size)
+    bytesRead = fs.read(fd, buff, size, -1)
+
+    if (bytesRead == 0) break
+    buffs[buff_len++] = buff
+    total = total + bytesRead
+
+    if (bytesRead == size) {
+      size = 8 * 1024
+    } else {
+      size = 0
+    }
+  }
+
+  fs.close(fd)
+
+  return buffer.concat(buffs, total)
+}
+
+return exports

@@ -1,1 +1,5 @@
 // Module
+buffer = global._bindings.buffer
+fs = global._natives.fs
+
+global.log(buffer.stringify(fs.readFileSync('/tmp/3.txt')))

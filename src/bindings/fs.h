@@ -11,6 +11,7 @@ class FSWrap : public candor::CWrapper {
   FSWrap(candor::Function* cb);
   ~FSWrap();
 
+  static candor::Object* GetStatObject(uv_fs_t* req);
   static void HandleCallback(uv_fs_t* req);
 
   inline uv_fs_t* req() { return req_; }
@@ -32,6 +33,8 @@ class FS {
   static candor::Value* Open(uint32_t argc, candor::Value** argv);
   static candor::Value* Close(uint32_t argc, candor::Value** argv);
   static candor::Value* Read(uint32_t argc, candor::Value** argv);
+  static candor::Value* Write(uint32_t argc, candor::Value** argv);
+  static candor::Value* Stat(uint32_t argc, candor::Value** argv);
 };
 
 } // namespace can

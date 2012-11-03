@@ -21,10 +21,6 @@ class Buffer : public candor::CWrapper {
   inline char* data() { return data_; }
   inline ssize_t size() { return size_; }
 
-  static candor::Value* New(uint32_t argc, candor::Value** argv);
-  static candor::Value* Length(uint32_t argc, candor::Value** argv);
-  static candor::Value* Stringify(uint32_t argc, candor::Value** argv);
-  static candor::Value* Slice(uint32_t argc, candor::Value** argv);
   static void Init(candor::Object* target);
 
   static bool HasInstance(candor::Value* value);
@@ -33,6 +29,12 @@ class Buffer : public candor::CWrapper {
   static const int magic;
 
  protected:
+  static candor::Value* New(uint32_t argc, candor::Value** argv);
+  static candor::Value* Length(uint32_t argc, candor::Value** argv);
+  static candor::Value* Stringify(uint32_t argc, candor::Value** argv);
+  static candor::Value* Slice(uint32_t argc, candor::Value** argv);
+  static candor::Value* Concat(uint32_t argc, candor::Value** argv);
+
   char* data_;
   ssize_t size_;
 };

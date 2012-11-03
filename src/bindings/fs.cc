@@ -12,29 +12,27 @@ using namespace candor;
 
 const int FSWrap::magic = 0;
 
-#define SYNC_CALL(method, res, ...) \
-    { \
-      uv_fs_t req; \
-      res = uv_fs_##method(uv_default_loop(), \
-                           &req, \
-                           __VA_ARGS__, \
-                           NULL); \
-    }
+#define SYNC_CALL(method, ...) \
+    uv_fs_t _req; \
+    _req.result = uv_fs_##method(uv_default_loop(), \
+                                 &_req, \
+                                 __VA_ARGS__, \
+                                 NULL);
+
+#define SYNC_REQ (&_req)
 
 #define ASYNC_CALL(method, cb, ...) \
-    { \
-      FSWrap* wrap = new FSWrap(cb); \
-      int r = uv_fs_##method(uv_default_loop(), \
-                             wrap->req(), \
-                             __VA_ARGS__, \
-                             FSWrap::HandleCallback); \
-      if (r) { \
-        Value* argv[2] = { \
-          String::New("FS request failed"), \
-          Number::NewIntegral(r) \
-        }; \
-        cb->Call(2, argv); \
-      } \
+    FSWrap* wrap = new FSWrap(cb); \
+    int r = uv_fs_##method(uv_default_loop(), \
+                           wrap->req(), \
+                           __VA_ARGS__, \
+                           FSWrap::HandleCallback); \
+    if (r) { \
+      Value* argv[2] = { \
+        String::New("FS request failed"), \
+        Number::NewIntegral(r) \
+      }; \
+      cb->Call(2, argv); \
     }
 
 FSWrap::FSWrap(Function* cb) : CWrapper(&magic), cb_(cb) {
@@ -51,10 +49,32 @@ FSWrap::~FSWrap() {
 }
 
 
+Object* FSWrap::GetStatObject(uv_fs_t* req) {
+  Object* res = Object::New();
+
+  assert(req->fs_type == UV_FS_STAT);
+  uv_statbuf_t* s = reinterpret_cast<uv_statbuf_t*>(req->ptr);
+
+  res->Set("uid", Number::NewIntegral(s->st_uid));
+  res->Set("gid", Number::NewIntegral(s->st_gid));
+  res->Set("size", Number::NewIntegral(s->st_size));
+  res->Set("atime", Number::NewIntegral(s->st_atime));
+  res->Set("mtime", Number::NewIntegral(s->st_mtime));
+  res->Set("ctime", Number::NewIntegral(s->st_ctime));
+
+  return res;
+}
+
+
 void FSWrap::HandleCallback(uv_fs_t* req) {
   FSWrap* wrap = reinterpret_cast<FSWrap*>(req->data);
 
   Value* argv[2] = { Nil::New(), Number::NewIntegral(req->result) };
+
+  if (req->fs_type == UV_FS_STAT) {
+    argv[1] = GetStatObject(req);
+  }
+
   wrap->cb_->Call(2, argv);
   wrap->cb_.Unref();
   wrap->Unref();
@@ -97,11 +117,10 @@ Value* FS::Open(uint32_t argc, Value** argv) {
 
     return Nil::New();
   } else {
-    int r;
-    SYNC_CALL(open, r, path, flags, mode);
+    SYNC_CALL(open, path, flags, mode);
     delete[] path;
 
-    return Number::NewIntegral(r);
+    return Number::NewIntegral(SYNC_REQ->result);
   }
 }
 
@@ -119,9 +138,8 @@ Value* FS::Close(uint32_t argc, Value** argv) {
     ASYNC_CALL(close, cb, fd);
     return Nil::New();
   } else {
-    int r;
-    SYNC_CALL(close, r, fd);
-    return Number::NewIntegral(r);
+    SYNC_CALL(close, fd);
+    return Number::NewIntegral(SYNC_REQ->result);
   }
 }
 
@@ -138,8 +156,8 @@ Value* FS::Read(uint32_t argc, Value** argv) {
 
   int fd = argv[0]->As<Number>()->IntegralValue();
   Buffer* buff = CWrapper::Unwrap<Buffer>(argv[1]);
-  int offset = argv[2]->As<Number>()->IntegralValue();
-  int len = argv[3]->As<Number>()->IntegralValue();
+  int len = argv[2]->As<Number>()->IntegralValue();
+  int offset = argv[3]->As<Number>()->IntegralValue();
 
   assert(offset + len <= buff->size());
 
@@ -148,9 +166,61 @@ Value* FS::Read(uint32_t argc, Value** argv) {
     ASYNC_CALL(read, cb, fd, buff->data(), len, offset);
     return Nil::New();
   } else {
-    int r;
-    SYNC_CALL(read, r, fd, buff->data(), len, offset);
-    return Number::NewIntegral(r);
+    SYNC_CALL(read, fd, buff->data(), len, offset);
+    return Number::NewIntegral(SYNC_REQ->result);
+  }
+}
+
+
+Value* FS::Write(uint32_t argc, Value** argv) {
+  // Input constraints
+  if (argc < 4 ||
+      !argv[0]->Is<Number>() ||
+      !Buffer::HasInstance(argv[1]) ||
+      !argv[2]->Is<Number>() ||
+      !argv[3]->Is<Number>()) {
+    return Nil::New();
+  }
+
+  int fd = argv[0]->As<Number>()->IntegralValue();
+  Buffer* buff = CWrapper::Unwrap<Buffer>(argv[1]);
+  int len = argv[2]->As<Number>()->IntegralValue();
+  int offset = argv[3]->As<Number>()->IntegralValue();
+
+  assert(offset + len <= buff->size());
+
+  if (argc >= 5 && argv[4]->Is<Function>()) {
+    Function* cb = argv[4]->As<Function>();
+    ASYNC_CALL(write, cb, fd, buff->data(), len, offset);
+    return Nil::New();
+  } else {
+    SYNC_CALL(write, fd, buff->data(), len, offset);
+    return Number::NewIntegral(SYNC_REQ->result);
+  }
+}
+
+
+Value* FS::Stat(uint32_t argc, Value** argv) {
+  // Input constraints
+  if (argc < 1 ||
+      !argv[0]->Is<String>()) {
+    return Nil::New();
+  }
+
+  char* path = StringToChar(argv[0]);
+  if (argc >= 2 && argv[1]->Is<Function>()) {
+    Function* cb = argv[1]->As<Function>();
+    ASYNC_CALL(stat, cb, path);
+    delete[] path;
+
+    return Nil::New();
+  } else {
+    SYNC_CALL(stat, path);
+    delete[] path;
+
+    if (SYNC_REQ->result) return Nil::New();
+
+    return FSWrap::GetStatObject(SYNC_REQ);
   }
 }
 
@@ -169,6 +239,8 @@ void FS::Init(Object* target) {
   target->Set("open", Function::New(Open));
   target->Set("close", Function::New(Close));
   target->Set("read", Function::New(Read));
+  target->Set("write", Function::New(Write));
+  target->Set("stat", Function::New(Stat));
 }
 
 } // namespace can

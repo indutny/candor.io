@@ -1,7 +1,8 @@
 {
   'variables': {
     'library_files': [
-      'lib/can.can', # This should come first
+      'lib/can.can',
+      'lib/fs.can',
       'lib/module.can',
     ]
   },

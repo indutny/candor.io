@@ -19,6 +19,11 @@ void LoadNatives() {
     Function* fn = Function::New(can_natives[i].name,
                                  can_natives[i].source,
                                  can_natives[i].size);
+
+    if (Isolate::GetCurrent()->HasError()) {
+      Isolate::GetCurrent()->PrintError();
+      abort();
+    }
     fn->SetContext(GetRuntime());
 
     // Put interface into _natives hashmap

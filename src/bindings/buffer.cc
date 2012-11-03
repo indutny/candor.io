@@ -48,17 +48,15 @@ Value* Buffer::Slice(uint32_t argc, Value** argv) {
   if (argc < 1 || !Buffer::HasInstance(argv[0])) return Nil::New();
 
   Buffer* b = CWrapper::Unwrap<Buffer>(argv[0]);
-  Buffer* c;
+  Buffer* c = new Buffer(0);
+
   if (argc == 1) {
-    // Just return a copy
-    c = new Buffer(b->size());
-    memcpy(c->data(), b->data(), b->size());
+    // Just return a buffer
   } else if (argc >= 2 && argv[1]->Is<Number>()) {
     int begin = argv[1]->As<Number>()->IntegralValue();
 
-    // Oob - return empty buffer
     if (begin > b->size()) {
-      c = new Buffer(0);
+      // Oob - return empty buffer
     } else if (argc >= 3 && argv[2]->Is<Number>()) {
       int end = argv[2]->As<Number>()->IntegralValue();
 
@@ -66,17 +64,52 @@ Value* Buffer::Slice(uint32_t argc, Value** argv) {
 
       // slice(10, 1) or slice(10, 10)
       if (end <= begin) {
-        c = new Buffer(0);
+        // Empty buffer
       } else {
-        c = new Buffer(end - begin);
-        memcpy(c->data(), b->data() + begin, end - begin);
+        c->size_ = end - begin;
+        c->data_ = b->data_ + begin;
       }
     } else {
-      c = new Buffer(b->size() - begin);
-      memcpy(c->data(), b->data() + begin, b->size() - begin);
+      c->size_ = b->size() - begin;
+      c->data_ = b->data_ + begin;
     }
   }
   return c->Wrap();
+}
+
+
+Value* Buffer::Concat(uint32_t argc, Value** argv) {
+  if (argc < 1 || !argv[0]->Is<Array>()) return Nil::New();
+
+  Array* arr = argv[0]->As<Array>();
+  int total = 0;
+
+  if (argc < 2 || !argv[1]->Is<Number>()) {
+    // Calculate total
+    for (int i = 0; i < arr->Length(); i++) {
+      if (!Buffer::HasInstance(arr->Get(i))) continue;
+      Buffer* current = CWrapper::Unwrap<Buffer>(arr->Get(i));
+
+      total += current->size();
+    }
+  } else {
+    total = argv[1]->As<Number>()->IntegralValue();
+  }
+
+  Buffer* result = new Buffer(total);
+  int offset = 0;
+  for (int i = 0; i < arr->Length(); i++) {
+    if (!Buffer::HasInstance(arr->Get(i))) continue;
+    Buffer* current = CWrapper::Unwrap<Buffer>(arr->Get(i));
+
+    int bytes = current->size();
+    if (offset + bytes > result->size()) bytes = result->size() - offset;
+
+    memcpy(result->data(), current->data(), bytes);
+    offset += bytes;
+  }
+
+  return result->Wrap();
 }
 
 
@@ -85,6 +118,7 @@ void Buffer::Init(Object* target) {
   target->Set("length", Function::New(Buffer::Length));
   target->Set("stringify", Function::New(Buffer::Stringify));
   target->Set("slice", Function::New(Buffer::Slice));
+  target->Set("concat", Function::New(Buffer::Concat));
 }
 
 } // namespace can
