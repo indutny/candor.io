@@ -6,13 +6,19 @@ binding = global.binding
 log("Hello world!")
 fs = global._bindings.fs
 
-fs.open("/tmp/1.txt", fs.flags.O_RDWR | fs.flags.O_CREAT, 438, (err, fd) {
-  log("yay", err, fd)
-  fs.open("/tmp/2.txt", fs.flags.O_RDWR | fs.flags.O_CREAT, 438, (err, fd) {
-    log("yayaya")
-    __$gc()
+fs.open("/tmp/1.txt", fs.flags.O_RDWR | fs.flags.O_CREAT, 438, (err, fd1) {
+  if (err) return
+  log("first:", fd1)
+  fs.open("/tmp/2.txt", fs.flags.O_RDWR | fs.flags.O_CREAT, 438, (err, fd2) {
+    if (err) return
+    log("second:", fd2)
+    fs.close(fd1, () {
+      log("first closed")
+      fs.close(fd2, () {
+        log("second closed")
+      })
+    })
   })
 })
-__$gc()
 
 return { yay: true }

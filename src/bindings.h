@@ -12,7 +12,7 @@ struct can_binding_s {
 };
 
 static const struct can_binding_s can_bindings[] = {
-  { "fs", LoadFSBinding },
+  { "fs", FS::Init },
   { NULL, NULL }
 };
 

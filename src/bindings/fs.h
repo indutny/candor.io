@@ -22,9 +22,15 @@ class FSWrap : public candor::CWrapper {
   candor::Handle<candor::Function> cb_;
 };
 
-candor::Value* FSOpen(uint32_t argc, candor::Value** argv);
+class FS {
+ public:
+  static void Init(candor::Object* target);
 
-void LoadFSBinding(candor::Object* target);
+ protected:
+  static candor::Value* Open(uint32_t argc, candor::Value** argv);
+  static candor::Value* Close(uint32_t argc, candor::Value** argv);
+  static candor::Value* Read(uint32_t argc, candor::Value** argv);
+};
 
 } // namespace can
 
