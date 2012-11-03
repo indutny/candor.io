@@ -9,7 +9,7 @@ namespace can {
 
 class Buffer : public candor::CWrapper {
  public:
-  Buffer(size_t size) : candor::CWrapper(&magic), size_(size) {
+  Buffer(ssize_t size) : candor::CWrapper(&magic), size_(size) {
     data_ = new char[size];
   }
 
@@ -19,17 +19,22 @@ class Buffer : public candor::CWrapper {
   }
 
   inline char* data() { return data_; }
-  inline size_t size() { return size_; }
+  inline ssize_t size() { return size_; }
 
   static candor::Value* New(uint32_t argc, candor::Value** argv);
+  static candor::Value* Length(uint32_t argc, candor::Value** argv);
+  static candor::Value* Stringify(uint32_t argc, candor::Value** argv);
+  static candor::Value* Slice(uint32_t argc, candor::Value** argv);
   static void Init(candor::Object* target);
+
+  static bool HasInstance(candor::Value* value);
 
   // Magic word
   static const int magic;
 
  protected:
   char* data_;
-  size_t size_;
+  ssize_t size_;
 };
 
 } // namespace can

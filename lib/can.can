@@ -2,27 +2,26 @@
 log = global.log
 compile = global.compile
 binding = global.binding
+fs = global._bindings.fs
+buffer = global._bindings.buffer
 
 log("Hello world!")
-fs = global._bindings.fs
 
-fs.open("/tmp/1.txt", fs.flags.O_RDWR | fs.flags.O_CREAT, 438, (err, fd1) {
-  if (err) return
-  log("first:", fd1)
-  fs.open("/tmp/2.txt", fs.flags.O_RDWR | fs.flags.O_CREAT, 438, (err, fd2) {
-    if (err) return
-    log("second:", fd2)
-    fs.close(fd1, () {
-      log("first closed")
-      fs.close(fd2, () {
-        log("second closed")
-      })
-    })
-  })
+buff = buffer.new(1024)
+
+fd = fs.open("/tmp/3.txt", fs.flags.O_RDONLY, 438)
+if (fd < 0) {
+  log("fail!")
+  return
+}
+
+fs.read(fd, buff, 0, 1024, (err, bytes) {
+  log(bytes)
+  fs.close(fd)
+
+  buff = buffer.slice(buff, 0, bytes)
+
+  log(buffer.stringify(buff))
 })
-
-fd = fs.openSync("/tmp/3.txt", fs.flags.O_RDWR | fs.flags.O_CREATE, 438)
-fs.closeSync(fd)
-log(global._bindings.buffer.new(1024))
 
 return { yay: true }
