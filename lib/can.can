@@ -21,4 +21,8 @@ fs.open("/tmp/1.txt", fs.flags.O_RDWR | fs.flags.O_CREAT, 438, (err, fd1) {
   })
 })
 
+fd = fs.openSync("/tmp/3.txt", fs.flags.O_RDWR | fs.flags.O_CREATE, 438)
+fs.closeSync(fd)
+log(global._bindings.buffer.new(1024))
+
 return { yay: true }

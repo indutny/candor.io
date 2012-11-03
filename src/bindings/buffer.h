@@ -21,7 +21,7 @@ class Buffer : public candor::CWrapper {
   inline char* data() { return data_; }
   inline size_t size() { return size_; }
 
-  static void New(uint32_t argc, candor::Value** argv);
+  static candor::Value* New(uint32_t argc, candor::Value** argv);
   static void Init(candor::Object* target);
 
   // Magic word

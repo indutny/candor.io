@@ -2,6 +2,7 @@
 #define _SRC_BINDINGS_H
 
 #include "bindings/fs.h"
+#include "bindings/buffer.h"
 #include <candor.h>
 
 namespace can {
@@ -13,6 +14,7 @@ struct can_binding_s {
 
 static const struct can_binding_s can_bindings[] = {
   { "fs", FS::Init },
+  { "buffer", Buffer::Init },
   { NULL, NULL }
 };
 

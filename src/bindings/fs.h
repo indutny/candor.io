@@ -15,13 +15,13 @@ class FSWrap : public candor::CWrapper {
 
   inline uv_fs_t* req() { return req_; }
 
+  static const int magic;
+
  protected:
   static void HandleClose(uv_handle_t* handle);
 
   uv_fs_t* req_;
   candor::Handle<candor::Function> cb_;
-
-  static const int magic;
 };
 
 class FS {
@@ -30,7 +30,9 @@ class FS {
 
  protected:
   static candor::Value* Open(uint32_t argc, candor::Value** argv);
+  static candor::Value* OpenSync(uint32_t argc, candor::Value** argv);
   static candor::Value* Close(uint32_t argc, candor::Value** argv);
+  static candor::Value* CloseSync(uint32_t argc, candor::Value** argv);
   static candor::Value* Read(uint32_t argc, candor::Value** argv);
 };
 
