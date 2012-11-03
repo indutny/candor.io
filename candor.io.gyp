@@ -29,6 +29,7 @@
       'src/natives.cc',
       'src/bindings.cc',
       'src/bindings/fs.cc',
+      'src/bindings/buffer.cc',
 
       '<@(library_files)',
       '<(SHARED_INTERMEDIATE_DIR)/can_natives.h',

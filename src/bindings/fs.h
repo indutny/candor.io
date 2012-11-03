@@ -20,6 +20,8 @@ class FSWrap : public candor::CWrapper {
 
   uv_fs_t* req_;
   candor::Handle<candor::Function> cb_;
+
+  static const int magic;
 };
 
 class FS {
