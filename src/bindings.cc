@@ -9,7 +9,6 @@ namespace can {
 using namespace candor;
 
 void LoadBindings() {
-  Object* runtime = GetRuntime();
   Object* bindings = Object::New();
 
   for (int i = 0; can_bindings[i].name != NULL; i++) {
@@ -22,7 +21,7 @@ void LoadBindings() {
   }
 
   // Expose `global._bindings` object
-  runtime->Set("_bindings", bindings);
+  GetRuntime()->Set("_bindings", bindings);
 }
 
 } // namespace can

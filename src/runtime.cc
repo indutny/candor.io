@@ -119,11 +119,11 @@ Value* CLoadBuiltin(uint32_t argc, Value* argv[]) {
 }
 
 
-static Object* cached_runtime = NULL;
+static Handle<Object> cached_runtime;
 
 
 Object* GetRuntime() {
-  if (cached_runtime != NULL) return cached_runtime;
+  if (!cached_runtime.IsEmpty()) return *cached_runtime;
 
   Object* res = Object::New();
 
@@ -132,7 +132,7 @@ Object* GetRuntime() {
   res->Set("compile", Function::New(CCompile));
   res->Set("builtin", Function::New(CLoadBuiltin));
 
-  cached_runtime = res;
+  cached_runtime.Wrap(res);
 
   return res;
 }

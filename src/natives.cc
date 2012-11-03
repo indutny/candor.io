@@ -10,17 +10,16 @@ namespace can {
 using namespace candor;
 
 void LoadNatives() {
-  Object* runtime = GetRuntime();
-  Object* natives = Object::New();
+  Handle<Object> natives(Object::New());
 
   // Expose `global._natives` object
-  runtime->Set("_natives", natives);
+  GetRuntime()->Set("_natives", *natives);
 
   for (int i = 0; can_natives[i].source != NULL; i++) {
     Function* fn = Function::New(can_natives[i].name,
                                  can_natives[i].source,
                                  can_natives[i].size);
-    fn->SetContext(runtime);
+    fn->SetContext(GetRuntime());
 
     // Put interface into _natives hashmap
     natives->Set(can_natives[i].name, fn->Call(0, NULL));
