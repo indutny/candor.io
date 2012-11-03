@@ -7,7 +7,7 @@ all: can.io
 build:
 	./io_gyp -Dosx_arch=$(ARCH) -f make
 
-can.io: build tools/can2c
+can.io: build
 	$(MAKE) -j $(JOBS) -C out can.io
 	ln -sf out/$(BUILDTYPE)/can.io can.io
 
