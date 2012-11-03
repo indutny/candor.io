@@ -81,6 +81,7 @@ void PrettyPrint(Value* value) {
 Value* CLog(uint32_t argc, Value* argv[]) {
   for (uint32_t i = 0; i < argc; i++) {
     PrettyPrint(argv[i]);
+    if (i + 1 < argc) fprintf(stdout, " ");
   }
   fprintf(stdout, "\n");
 
