@@ -4,10 +4,10 @@ fs = global._bindings.fs
 buffer = global._bindings.buffer
 
 exports.readFileSync = (filename) {
-  fd = fs.open(filename, fs.flags.O_RDONLY, 438)
-
   stat = fs.stat(filename)
   if (stat == nil) return
+
+  fd = fs.open(filename, fs.flags.O_RDONLY, 438)
 
   size = stat.size
   buffs = []

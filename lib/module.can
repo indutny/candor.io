@@ -1,5 +1,9 @@
 // Module
+compile = global.compile
 buffer = global._bindings.buffer
 fs = global._natives.fs
 
-global.log(buffer.stringify(fs.readFileSync('/tmp/3.txt')))
+global.require = (filename) {
+  content = buffer.stringify(fs.readFileSync(filename))
+  return compile(filename, content)()
+}

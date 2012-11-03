@@ -1,9 +1,9 @@
 {
   'variables': {
     'library_files': [
-      'lib/can.can',
       'lib/fs.can',
       'lib/module.can',
+      'lib/can.can',
     ]
   },
   'targets': [{

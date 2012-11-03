@@ -1,1 +1,6 @@
 // Main binding
+process = global.process
+require = global.require
+
+// Load first argument
+if (process.argc > 1) require(process.argv[1])

@@ -93,13 +93,11 @@ Value* CCompile(uint32_t argc, Value* argv[]) {
   String* filename = (argc >= 1 ? argv[0] : Nil::New())->ToString();
   String* code = (argc >= 2 ? argv[1] : Nil::New())->ToString();
 
-  char name[1024];
-  size_t len = sizeof(name) - 1;
+  size_t len = filename->Length();
+  char* name = new char[len + 1];
 
-  if (filename->Length() < len) {
-    len = filename->Length();
-  }
-  strncpy(name, filename->Value(), len);
+  memcpy(name, filename->Value(), len);
+  name[len] = 0;
 
   Function* res = Function::New(name, code->Value(), code->Length());
 
