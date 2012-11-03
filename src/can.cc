@@ -4,18 +4,20 @@
 #include <candor.h>
 #include <uv.h>
 
-#include "bindings/index.h"
+#include "can_natives.h"
 #include "runtime.h"
 
 using candor::Isolate;
 using candor::Function;
 
+using namespace can;
+
 int main(int argc, char** argv) {
   Isolate isolate;
 
   Function* code = Function::New("main",
-                                 __binding_lib_can,
-                                 strlen(__binding_lib_can));
+                                 can_natives[0].source,
+                                 can_natives[0].size);
 
   // Self-checking
   if (isolate.HasError()) {

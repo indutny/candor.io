@@ -1,7 +1,9 @@
 #include "runtime.h"
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <stdlib.h> // NULL
+#include <stdio.h> // fprintf
+#include <string.h> // strncpy
+#include <sys/types.h> // size_t
 
 namespace can {
 
@@ -85,10 +87,51 @@ Value* CLog(uint32_t argc, Value* argv[]) {
   return Nil::New();
 }
 
+
+Value* CCompile(uint32_t argc, Value* argv[]) {
+  String* filename = (argc >= 1 ? argv[0] : Nil::New())->ToString();
+  String* code = (argc >= 2 ? argv[1] : Nil::New())->ToString();
+
+  char name[1024];
+  size_t len = sizeof(name) - 1;
+
+  if (filename->Length() < len) {
+    len = filename->Length();
+  }
+  strncpy(name, filename->Value(), len);
+
+  Function* res = Function::New(name, code->Value(), code->Length());
+
+  if (Isolate::GetCurrent()->HasError()) {
+    Isolate::GetCurrent()->PrintError();
+    return Nil::New();
+  }
+
+  res->SetContext(GetRuntime());
+
+  return res;
+}
+
+
+Value* CLoadBuiltin(uint32_t argc, Value* argv[]) {
+  return Nil::New();
+}
+
+
+static Object* cached_runtime = NULL;
+
+
 Object* GetRuntime() {
+  if (cached_runtime != NULL) return cached_runtime;
+
   Object* res = Object::New();
 
   res->Set("log", Function::New(CLog));
+
+  res->Set("compile", Function::New(CCompile));
+  res->Set("builtin", Function::New(CLoadBuiltin));
+
+  cached_runtime = res;
 
   return res;
 }

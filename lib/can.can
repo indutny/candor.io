@@ -1,2 +1,6 @@
 // Main binding
-global.log('hello world!')
+log = global.log
+compile = global.compile
+binding = global.binding
+
+log("Hello world!")

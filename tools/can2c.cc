@@ -1,67 +1,97 @@
 #include <stdio.h> // fprintf
 #include <stdlib.h> // exit
+#include <string.h> // strdup
+#include <libgen.h> // basename
 
 int main(int argc, char** argv) {
-  if (argc < 2) {
-    fprintf(stderr, "Usage: can2c lib/script.can [build/script.h]\n");
+  if (argc < 3) {
+    fprintf(stderr, "Usage: can2c header.h ...scripts...\n");
     exit(1);
   }
 
-  // Open both files
-  FILE* in = fopen(argv[1], "r");
-  if (in == NULL) {
-    fprintf(stderr, "Can\'t open input file: %s\n", argv[1]);
-    exit(1);
-  }
-
+  // Open output
   FILE* out;
-  if (argc >= 3) {
-    out = fopen(argv[2], "w");
-    if (out == NULL) {
-      fclose(in);
-      fprintf(stderr, "Can\'t open output file: %s\n", argv[2]);
-      exit(1);
-    }
-  } else {
-    out = stdout;
+  out = fopen(argv[1], "w");
+  if (out == NULL) {
+    fprintf(stderr, "Can\'t open output file: %s\n", argv[2]);
+    exit(1);
   }
 
-  // Replace non-chars with _ in input filename
-  // and '.' with '\0'
-  for (int i = 0; argv[1][i] != 0; i++) {
-    unsigned char c = argv[1][i];
-    if (c == '.') {
-      argv[1][i] = 0;
-      break;
-    } else if (c < 'a' || c > 'z') {
-      argv[1][i] = '_';
-    }
-  }
+  // Print headers
+  fprintf(out, "#ifndef _SRC_NATIVES_H_\n"
+               "#define _SRC_NATIVES_H_\n"
+               "namespace can {\n");
 
-  // Put generated content into the output file
-  fprintf(out, "extern const char __binding_%s[] = {\n", argv[1]);
+  char** names = (char**) malloc(sizeof(*names) * argc - 2);
+  if (names == NULL) abort();
 
-  int offset = 0;
-  while (!feof(in)) {
-    // Read file
-    unsigned char buffer[1024];
-    size_t read = fread(buffer, 1, sizeof(buffer), in);
-    if (read == 0) {
-      fclose(in);
+  for (int i = 0; i < argc - 2; i++) {
+    // Open source file
+    FILE* in = fopen(argv[i + 2], "r");
+    if (in == NULL) {
+      fprintf(stderr, "Can\'t open input file: %s\n", argv[i + 2]);
       fclose(out);
-      fprintf(stderr, "Failed to read input file\n");
       exit(1);
     }
 
-    // Translate it to byte sequence
-    for (size_t i = 0; i < read; i++) {
-      fprintf(out, "0x%.2x, ", buffer[i]);
-      if (++offset % 30 == 0) fprintf(out, "\n");
+    names[i] = strdup(basename(argv[i + 2]));
+    if (names[i] == NULL) abort();
+
+    // Replace non-chars with _ in input filename
+    // and '.' with '\0'
+    for (int j = 0; names[i][j] != 0; j++) {
+      unsigned char c = names[i][j];
+      if (c == '.') {
+        names[i][j] = 0;
+        break;
+      } else if (c < 'a' || c > 'z') {
+        names[i][j] = '_';
+      }
     }
+
+    // Put generated content into the output file
+    fprintf(out, "const char can_native_%s[] = {\n", names[i]);
+
+    int offset = 0;
+    while (!feof(in)) {
+      // Read file
+      unsigned char buffer[1024];
+      size_t read = fread(buffer, 1, sizeof(buffer), in);
+      if (read == 0) {
+        fclose(in);
+        fclose(out);
+        fprintf(stderr, "Failed to read input file: %s\n", argv[i]);
+        exit(1);
+      }
+
+      // Translate it to byte sequence
+      for (size_t i = 0; i < read; i++) {
+        fprintf(out, "0x%.2x, ", buffer[i]);
+        if (++offset % 20 == 0) fprintf(out, "\n");
+      }
+    }
+    fprintf(out, "0x0\n};\n");
+    fclose(in);
   }
 
-  fprintf(out, "0x0\n};\n");
+  fprintf(out, "struct can_native_s {\n"
+               "  const char* name;\n"
+               "  const char* source;\n"
+               "  size_t size;\n"
+               "};\n"
+               "static const struct can_native_s can_natives[] = {\n");
+  for (int i = 0; i < argc - 2; i++) {
+    fprintf(out,
+            "  { \"%s\", can_native_%s, sizeof(can_native_%s) - 1 },\n",
+            names[i],
+            names[i],
+            names[i]);
+    free(names[i]);
+  }
+  fprintf(out, "  { NULL, NULL, 0 }\n"
+               "};\n"
+               "} // namespace can\n"
+               "#endif // _SRC_NATIVES_H_\n");
 
-  fclose(in);
   fclose(out);
 }
