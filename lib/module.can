@@ -6,5 +6,9 @@ fs = global._natives.fs
 global.require = (filename) {
   content = buffer.stringify(fs.readFileSync(filename))
   content = "return (require) {\n" + content + "\n}"
-  return compile(filename, content)()(global.require)
+
+  return compile(
+    filename,
+    content
+  )()(global.require)
 }
