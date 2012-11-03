@@ -12,14 +12,26 @@ using namespace candor;
 
 const int FSWrap::magic = 0;
 
-#define SYNC_CALL(method, ...) \
-    uv_fs_t _req; \
-    _req.result = uv_fs_##method(uv_default_loop(), \
-                                 &_req, \
-                                 __VA_ARGS__, \
-                                 NULL);
+// This struct is only used on sync fs calls.
+// For async calls FSWrap is used.
+struct fs_req_wrap {
+  fs_req_wrap() {}
+  ~fs_req_wrap() { uv_fs_req_cleanup(&req); }
+  // Ensure that copy ctor and assignment operator are not used.
+  fs_req_wrap(const fs_req_wrap& req);
+  fs_req_wrap& operator=(const fs_req_wrap& req);
+  uv_fs_t req;
+};
 
-#define SYNC_REQ (&_req)
+#define SYNC_CALL(method, ...) \
+    fs_req_wrap _req; \
+    int _req_res = uv_fs_##method(uv_default_loop(), \
+                                  &_req.req, \
+                                  __VA_ARGS__, \
+                                  NULL);
+
+#define SYNC_REQ_RES (_req_res)
+#define SYNC_REQ (&_req.req)
 
 #define ASYNC_CALL(method, cb, ...) \
     FSWrap* wrap = new FSWrap(cb); \
@@ -45,6 +57,7 @@ FSWrap::FSWrap(Function* cb) : CWrapper(&magic), cb_(cb) {
 FSWrap::~FSWrap() {
   cb_.Unref();
   if (req_ == NULL) return;
+  uv_fs_req_cleanup(req_);
   delete req_;
 }
 
@@ -52,8 +65,9 @@ FSWrap::~FSWrap() {
 Object* FSWrap::GetStatObject(uv_fs_t* req) {
   Object* res = Object::New();
 
-  assert(req->fs_type == UV_FS_STAT);
-  uv_statbuf_t* s = reinterpret_cast<uv_statbuf_t*>(req->ptr);
+  assert(req->fs_type == UV_FS_STAT ||
+         req->fs_type == UV_FS_LSTAT);
+  uv_statbuf_t* s = &req->statbuf;
 
   res->Set("uid", Number::NewIntegral(s->st_uid));
   res->Set("gid", Number::NewIntegral(s->st_gid));
@@ -120,7 +134,7 @@ Value* FS::Open(uint32_t argc, Value** argv) {
     SYNC_CALL(open, path, flags, mode);
     delete[] path;
 
-    return Number::NewIntegral(SYNC_REQ->result);
+    return Number::NewIntegral(SYNC_REQ_RES);
   }
 }
 
@@ -139,7 +153,7 @@ Value* FS::Close(uint32_t argc, Value** argv) {
     return Nil::New();
   } else {
     SYNC_CALL(close, fd);
-    return Number::NewIntegral(SYNC_REQ->result);
+    return Number::NewIntegral(SYNC_REQ_RES);
   }
 }
 
@@ -167,7 +181,7 @@ Value* FS::Read(uint32_t argc, Value** argv) {
     return Nil::New();
   } else {
     SYNC_CALL(read, fd, buff->data(), len, offset);
-    return Number::NewIntegral(SYNC_REQ->result);
+    return Number::NewIntegral(SYNC_REQ_RES);
   }
 }
 
@@ -195,7 +209,7 @@ Value* FS::Write(uint32_t argc, Value** argv) {
     return Nil::New();
   } else {
     SYNC_CALL(write, fd, buff->data(), len, offset);
-    return Number::NewIntegral(SYNC_REQ->result);
+    return Number::NewIntegral(SYNC_REQ_RES);
   }
 }
 
@@ -218,7 +232,7 @@ Value* FS::Stat(uint32_t argc, Value** argv) {
     SYNC_CALL(stat, path);
     delete[] path;
 
-    if (SYNC_REQ->result) return Nil::New();
+    if (SYNC_REQ_RES) return Nil::New();
 
     return FSWrap::GetStatObject(SYNC_REQ);
   }

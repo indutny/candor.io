@@ -3,6 +3,55 @@ exports = {}
 fs = global._bindings.fs
 buffer = global._bindings.buffer
 
+exports.open = fs.open
+exports.close = fs.close
+exports.read = fs.read
+exports.write = fs.write
+
+exports.readFile = (filename, callback) {
+  fs.stat(filename, (err, stat) {
+    if (err) return callback(err)
+
+    buffs = []
+    buff_len = 0
+    total = 0
+    size = stat.size
+
+    onOpen(fd) {
+      if (size == 0) {
+        fs.close(fd, () {})
+
+        callback(nil, buffer.concat(buffs, total))
+      }
+
+      buff = buffer.new(size)
+      fs.read(fd, buff, size, -1, (err, bytesRead) {
+        if (bytesRead != size) {
+          size = 0
+        }
+        if (bytesRead == 0) return onOpen(fd)
+
+        buffs[buff_len++] = buff
+        total = total + bytesRead
+
+        if (bytesRead == size) {
+          size = 8 * 1024
+        } else {
+          size = 0
+        }
+
+        onOpen(fd)
+      })
+    }
+
+    fs.open(filename, fs.flags.O_RDONLY, 438, (err, fd) {
+      if (err) return callback(err)
+
+      onOpen(fd, stat)
+    })
+  })
+}
+
 exports.readFileSync = (filename) {
   stat = fs.stat(filename)
   if (stat == nil) return
