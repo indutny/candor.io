@@ -4,3 +4,6 @@ compile = global.compile
 binding = global.binding
 
 log("Hello world!")
+log(global.process.argv)
+
+return { yay: true }

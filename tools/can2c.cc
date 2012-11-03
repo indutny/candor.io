@@ -18,8 +18,8 @@ int main(int argc, char** argv) {
   }
 
   // Print headers
-  fprintf(out, "#ifndef _SRC_NATIVES_H_\n"
-               "#define _SRC_NATIVES_H_\n"
+  fprintf(out, "#ifndef _GEN_CAN__NATIVES_H_\n"
+               "#define _GEN_CAN__NATIVES_H_\n"
                "namespace can {\n");
 
   char** names = (char**) malloc(sizeof(*names) * argc - 2);
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
   fprintf(out, "  { NULL, NULL, 0 }\n"
                "};\n"
                "} // namespace can\n"
-               "#endif // _SRC_NATIVES_H_\n");
+               "#endif // _GEN_CAN__NATIVES_H_\n");
 
   fclose(out);
 }

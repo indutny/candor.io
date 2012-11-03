@@ -23,9 +23,10 @@
                '-fPIC', '-fno-strict-aliasing', '-fno-exceptions',
                '-pedantic'],
     'sources': [
-      'src/can.cc',
+      'src/main.cc',
       'src/runtime.cc',
-      'src/bindings/can.cc'
+      'src/process.cc',
+      'src/natives.cc',
       '<@(library_files)',
       '<(SHARED_INTERMEDIATE_DIR)/can_natives.h',
     ]

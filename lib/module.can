@@ -1,1 +1,2 @@
 // Module
+global.log(global._natives)
