@@ -3,12 +3,21 @@ compile = global.compile
 buffer = global._bindings.buffer
 fs = global._natives.fs
 
+cache = clone global._natives
 global.require = (filename) {
-  content = buffer.stringify(fs.readFileSync(filename))
-  content = "return (require) {\n" + content + "\n}"
+  if (cache[filename]) return cache[filename]
 
-  return compile(
+  content = buffer.stringify(fs.readFileSync(filename) ||
+                             fs.readFileSync(filename + '.can'))
+  content = "return (require, module, exports) {\n" + content + "\n}"
+
+  module = {}
+  module.exports = cache[filename] = {}
+
+  compile(
     filename,
     content
-  )()(global.require)
+  )()(global.require, module, module.exports)
+
+  return module.exports
 }

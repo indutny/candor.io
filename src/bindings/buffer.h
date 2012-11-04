@@ -9,8 +9,8 @@ namespace can {
 
 class Buffer : public candor::CWrapper {
  public:
-  Buffer(ssize_t size) : candor::CWrapper(&magic), size_(size) {
-    data_ = new char[size];
+  Buffer(ssize_t size) : candor::CWrapper(&magic), size_(size > 0 ? size : 0) {
+    data_ = new char[size_];
   }
 
   ~Buffer() {

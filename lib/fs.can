@@ -20,8 +20,7 @@ exports.readFile = (filename, callback) {
     onOpen(fd) {
       if (size == 0) {
         fs.close(fd, () {})
-
-        callback(nil, buffer.concat(buffs, total))
+        return callback(nil, buffer.concat(buffs, total))
       }
 
       buff = buffer.new(size)
@@ -47,7 +46,7 @@ exports.readFile = (filename, callback) {
     fs.open(filename, fs.flags.O_RDONLY, 438, (err, fd) {
       if (err) return callback(err)
 
-      onOpen(fd, stat)
+      onOpen(fd)
     })
   })
 }
