@@ -9,7 +9,7 @@ global.require = (filename) {
 
   content = buffer.stringify(fs.readFileSync(filename) ||
                              fs.readFileSync(filename + '.can'))
-  content = "return (require, module, exports) {\n" + content + "\n}"
+  content = 'return (require, module, exports) {\n' + content + '\n}'
 
   module = {}
   module.exports = cache[filename] = {}

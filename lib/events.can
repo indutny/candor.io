@@ -1,0 +1,29 @@
+// EventEmitter
+exports = {}
+
+EventEmitter = exports.EventEmitter = {
+  _listeners: {}
+}
+
+EventEmitter.init = (self) {
+}
+
+EventEmitter.on = (self, event, listener) {
+  if (!self._listeners[event]) self._listeners[event] = []
+  listeners = self._listeners[event]
+
+  listeners[sizeof listeners] = listener
+}
+
+EventEmitter.emit = (self, event, args...) {
+  i = 0
+  listeners = self._listeners[event]
+  while (i < sizeof listeners) {
+    listeners[i](args...)
+    i++
+  }
+
+  return sizeof listeners
+}
+
+return exports

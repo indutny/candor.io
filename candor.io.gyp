@@ -1,6 +1,7 @@
 {
   'variables': {
     'library_files': [
+      'lib/events.can',
       'lib/fs.can',
       'lib/tcp.can',
       'lib/module.can',

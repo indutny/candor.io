@@ -1,29 +1,40 @@
 // TCP Module
 
 tcp = global._bindings.tcp
+EventEmitter = global._natives.events.EventEmitter
 
 exports = {}
 
-Server = exports.Server = {}
+Socket = exports.Socket = clone EventEmitter
+Socket.init = (self, handle) {
+  EventEmitter.init(self)
+  self._handle = hande
+}
+
+Server = exports.Server = clone EventEmitter
 Server.init = (self, listener) {
-  global.log(self, listener)
   self._handle = tcp.new()
-  self._listener = listener
+
+  if (listener) self:on('connection', listener)
 
   return self
 }
 
 Server.listen = (self, port, host) {
-  tcp.bind(self._handle, port, host || "0.0.0.0")
-  tcp.listen(self._handle, 511, (socket) {
-    self._listener(socket)
+  tcp.bind(self._handle, port, host || '0.0.0.0')
+  tcp.listen(self._handle, 511, (handle) {
+    socket = clone Socket
+    self:emit('connection', socket:init(handle))
   })
 
   return self
 }
 
 Server.close = (self, cb) {
-  tcp.close(self._handle, cb || () {})
+  if (cb) self:on('close', cb)
+  tcp.close(self._handle, () {
+    self:emit('close')
+  })
 }
 
 exports.createServer = (listener) {
