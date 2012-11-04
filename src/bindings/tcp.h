@@ -11,6 +11,7 @@ namespace can {
 class TCP : public candor::CWrapper {
  public:
   TCP() : candor::CWrapper(&magic) {
+    Ref();
   }
 
   static void Init(candor::Object* target);
@@ -22,14 +23,17 @@ class TCP : public candor::CWrapper {
 
  protected:
   static void OnConnection(uv_stream_t* server, int status);
+  static void OnClose(uv_handle_t* server);
 
   static candor::Value* New(uint32_t argc, candor::Value** argv);
   static candor::Value* Bind(uint32_t argc, candor::Value** argv);
   static candor::Value* Listen(uint32_t argc, candor::Value** argv);
+  static candor::Value* Close(uint32_t argc, candor::Value** argv);
 
   uv_tcp_t handle_;
 
   candor::Handle<candor::Function> connection_cb_;
+  candor::Handle<candor::Function> close_cb_;
 };
 
 } // namespace can

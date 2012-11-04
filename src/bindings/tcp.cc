@@ -86,10 +86,42 @@ Value* TCP::Listen(uint32_t argc, Value** argv) {
 }
 
 
+void TCP::OnClose(uv_handle_t* handle) {
+  TCP* s = reinterpret_cast<TCP*>(handle->data);
+
+  if (!s->close_cb_.IsEmpty()) {
+    s->close_cb_->Call(0, NULL);
+    s->close_cb_.Unwrap();
+    s->Unref();
+  }
+}
+
+
+Value* TCP::Close(uint32_t argc, Value** argv) {
+  if (argc < 2 || !TCP::HasInstance(argv[0]) || !argv[1]->Is<Function>()) {
+    return Nil::New();
+  }
+
+  Function* cb = argv[1]->As<Function>();
+  TCP* t = CWrapper::Unwrap<TCP>(argv[0]);
+
+  // Already closing/closed - just return
+  if (uv_is_closing(reinterpret_cast<uv_handle_t*>(&t->handle_))) {
+    return Number::NewIntegral(-1);
+  }
+
+  t->close_cb_.Wrap(cb);
+  uv_close(reinterpret_cast<uv_handle_t*>(&t->handle_), OnClose);
+
+  return Nil::New();
+}
+
+
 void TCP::Init(Object* target) {
   target->Set("new", Function::New(TCP::New));
   target->Set("bind", Function::New(TCP::Bind));
   target->Set("listen", Function::New(TCP::Listen));
+  target->Set("close", Function::New(TCP::Close));
 }
 
 } // namespace can
