@@ -1,19 +1,17 @@
 // TCP Module
 
 tcp = global._bindings.tcp
+buffer = global._bindings.buffer
 EventEmitter = global._natives.events.EventEmitter
 
 exports = {}
 
-Socket = exports.Socket = clone EventEmitter
-Socket.init = (self, handle) {
-  EventEmitter.init(self)
-  self._handle = hande
-}
-
 Server = exports.Server = clone EventEmitter
+
 Server.init = (self, listener) {
+  EventEmitter.init(self)
   self._handle = tcp.new()
+  self._isServer = true
 
   if (listener) self:on('connection', listener)
 
@@ -22,12 +20,19 @@ Server.init = (self, listener) {
 
 Server.listen = (self, port, host) {
   tcp.bind(self._handle, port, host || '0.0.0.0')
-  tcp.listen(self._handle, 511, (handle) {
+  tcp.listen(self._handle, 511, (err, handle) {
+    if (err) return self:emit('error', err)
+
     socket = clone Socket
     self:emit('connection', socket:init(handle))
   })
 
   return self
+}
+
+exports.createServer = (listener) {
+  s = clone Server
+  return s:init(listener)
 }
 
 Server.close = (self, cb) {
@@ -37,9 +42,24 @@ Server.close = (self, cb) {
   })
 }
 
-exports.createServer = (listener) {
-  s = clone Server
-  return s:init(listener)
+exports.Socket = Socket = clone EventEmitter
+
+Socket.init = (self, handle) {
+  EventEmitter.init(self)
+  self._handle = handle
+  self._isServer = false
+
+  tcp.readStart(handle, (size, data) {
+    if (size > 0) self:emit('data', data)
+  })
+
+  return self
 }
+
+Socket.write = (self, data, cb) {
+  return tcp.write(self._handle, buffer.new(data), cb)
+}
+
+Socket.close = Server.close
 
 return exports

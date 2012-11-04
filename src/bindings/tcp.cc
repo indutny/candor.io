@@ -6,6 +6,7 @@ namespace can {
 using namespace candor;
 
 const int TCP::magic = 0;
+const int TCPWrite::magic = 0;
 
 
 bool TCP::HasInstance(Value* value) {
@@ -91,9 +92,104 @@ void TCP::OnClose(uv_handle_t* handle) {
 
   if (!s->close_cb_.IsEmpty()) {
     s->close_cb_->Call(0, NULL);
-    s->close_cb_.Unwrap();
-    s->Unref();
   }
+  s->Unref();
+  s->connection_cb_.Unwrap();
+  s->close_cb_.Unwrap();
+  s->read_cb_.Unwrap();
+}
+
+
+uv_buf_t TCP::AllocCallback(uv_handle_t* handle, size_t size) {
+  // XXX Use slab allocator
+  uv_buf_t res;
+  res.base = new char[size];
+  res.len = size;
+
+  return res;
+}
+
+
+void TCP::ReadCallback(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
+  TCP* t = reinterpret_cast<TCP*>(stream->data);
+
+  Buffer* b = new Buffer(buf.base, nread);
+
+  Value* argv[2] = { Number::NewIntegral(nread), b->Wrap() };
+  if (!t->read_cb_.IsEmpty()) t->read_cb_->Call(2, argv);
+}
+
+
+Value* TCP::ReadStart(uint32_t argc, Value** argv) {
+  if (argc < 2 || !TCP::HasInstance(argv[0]) || !argv[1]->Is<Function>()) {
+    return Nil::New();
+  }
+
+  TCP* t = CWrapper::Unwrap<TCP>(argv[0]);
+  Function* cb = argv[1]->As<Function>();
+
+  t->read_cb_.Wrap(cb);
+  int r = uv_read_start(reinterpret_cast<uv_stream_t*>(&t->handle_),
+                        AllocCallback,
+                        ReadCallback);
+
+  return Number::NewIntegral(r);
+}
+
+
+TCPWrite::TCPWrite(TCP* tcp, Buffer* b, Function* cb) : CWrapper(&magic),
+                                                        tcp_(tcp),
+                                                        b_(b),
+                                                        cb_(cb) {
+  Ref();
+  b->Ref();
+
+  buf_.base = b->data();
+  buf_.len = b->size();
+
+  req_.data = this;
+  tcp_->Ref();
+  uv_write(&req_,
+           reinterpret_cast<uv_stream_t*>(&tcp_->handle_),
+           &buf_,
+           1,
+           OnWrite);
+}
+
+
+TCPWrite::~TCPWrite() {
+  b_->Unref();
+  tcp_->Unref();
+}
+
+
+void TCPWrite::OnWrite(uv_write_t* req, int status) {
+  Value* argv[1] = { Nil::New() };
+  if (status) {
+    argv[0] = Number::NewIntegral(status);
+  }
+
+  TCPWrite* w = reinterpret_cast<TCPWrite*>(req->data);
+  w->cb_->Call(2, argv);
+  w->Unref();
+}
+
+
+Value* TCP::Write(uint32_t argc, Value** argv) {
+  if (argc < 3 ||
+      !TCP::HasInstance(argv[0]) ||
+      !Buffer::HasInstance(argv[1]) ||
+      !argv[2]->Is<Function>()) {
+    return Nil::New();
+  }
+
+  TCP* t = CWrapper::Unwrap<TCP>(argv[0]);
+  Buffer* b = CWrapper::Unwrap<Buffer>(argv[1]);
+  Function* cb = argv[2]->As<Function>();
+
+  new TCPWrite(t, b, cb);
+
+  return Nil::New();
 }
 
 
@@ -106,10 +202,11 @@ Value* TCP::Close(uint32_t argc, Value** argv) {
   TCP* t = CWrapper::Unwrap<TCP>(argv[0]);
 
   // Already closing/closed - just return
-  if (uv_is_closing(reinterpret_cast<uv_handle_t*>(&t->handle_))) {
+  if (t->closing_) {
     return Number::NewIntegral(-1);
   }
 
+  t->closing_ = true;
   t->close_cb_.Wrap(cb);
   uv_close(reinterpret_cast<uv_handle_t*>(&t->handle_), OnClose);
 
@@ -122,6 +219,8 @@ void TCP::Init(Object* target) {
   target->Set("bind", Function::New(TCP::Bind));
   target->Set("listen", Function::New(TCP::Listen));
   target->Set("close", Function::New(TCP::Close));
+  target->Set("readStart", Function::New(TCP::ReadStart));
+  target->Set("write", Function::New(TCP::Write));
 }
 
 } // namespace can

@@ -1,11 +1,10 @@
 // EventEmitter
 exports = {}
 
-EventEmitter = exports.EventEmitter = {
-  _listeners: {}
-}
+EventEmitter = exports.EventEmitter = {}
 
 EventEmitter.init = (self) {
+  self._listeners = {}
 }
 
 EventEmitter.on = (self, event, listener) {

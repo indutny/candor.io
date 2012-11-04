@@ -10,11 +10,22 @@ namespace can {
 class Buffer : public candor::CWrapper {
  public:
   Buffer(ssize_t size) : candor::CWrapper(&magic), size_(size > 0 ? size : 0) {
+    if (size_ == 0) {
+      data_ = NULL;
+      allocated_ = false;
+    }
     data_ = new char[size_];
+    allocated_ = true;
+  }
+
+  Buffer(char* data, ssize_t size) : candor::CWrapper(&magic),
+                                     allocated_(true),
+                                     data_(data),
+                                     size_(size) {
   }
 
   ~Buffer() {
-    delete[] data_;
+    if (allocated_) delete[] data_;
     data_ = NULL;
   }
 
@@ -35,6 +46,7 @@ class Buffer : public candor::CWrapper {
   static candor::Value* Slice(uint32_t argc, candor::Value** argv);
   static candor::Value* Concat(uint32_t argc, candor::Value** argv);
 
+  bool allocated_;
   char* data_;
   ssize_t size_;
 };

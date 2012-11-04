@@ -20,6 +20,12 @@ Value* Buffer::New(uint32_t argc, Value** argv) {
 
   if (argv[0]->Is<Number>()) {
     b = new Buffer(argv[0]->As<Number>()->IntegralValue());
+  } else if (argv[0]->Is<String>()) {
+    String* str = argv[0]->As<String>();
+    b = new Buffer(str->Length());
+    memcpy(b->data(), str->Value(), b->size());
+  } else if (Buffer::HasInstance(argv[0])) {
+    return argv[0];
   } else {
     return Nil::New();
   }
