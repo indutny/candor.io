@@ -3,6 +3,7 @@
 
 #include "bindings/fs.h"
 #include "bindings/buffer.h"
+#include "bindings/tcp.h"
 #include <candor.h>
 
 namespace can {
@@ -15,6 +16,7 @@ struct can_binding_s {
 static const struct can_binding_s can_bindings[] = {
   { "fs", FS::Init },
   { "buffer", Buffer::Init },
+  { "tcp", TCP::Init },
   { NULL, NULL }
 };
 

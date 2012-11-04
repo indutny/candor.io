@@ -1,0 +1,30 @@
+// TCP Module
+
+tcp = global._bindings.tcp
+
+exports = {}
+
+Server = exports.Server = {}
+Server.init = (self, listener) {
+  global.log(self, listener)
+  self._handle = tcp.new()
+  self._listener = listener
+
+  return self
+}
+
+Server.listen = (self, port, host) {
+  tcp.bind(self._handle, port, host || "0.0.0.0")
+  tcp.listen(self._handle, 10, (socket) {
+    self._listener(socket)
+  })
+
+  return self
+}
+
+exports.createServer = (listener) {
+  s = clone Server
+  return s:init(listener)
+}
+
+return exports

@@ -1,5 +1,6 @@
 #include "runtime.h"
 #include "bindings/buffer.h" // Buffer
+#include "bindings/tcp.h" // TCP
 
 #include <stdlib.h> // NULL
 #include <stdio.h> // fprintf
@@ -21,6 +22,8 @@ void PrettyPrint(Value* value) {
    case Value::kCData:
     if (Buffer::HasInstance(value)) {
       fprintf(stdout, "\033[1;31m" "buffer" "\033[0m");
+    } else if (TCP::HasInstance(value)) {
+      fprintf(stdout, "\033[1;31m" "tcp" "\033[0m");
     } else {
       fprintf(stdout, "\033[1;31m" "cdata" "\033[0m");
     }

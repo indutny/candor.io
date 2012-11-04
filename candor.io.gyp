@@ -2,6 +2,7 @@
   'variables': {
     'library_files': [
       'lib/fs.can',
+      'lib/tcp.can',
       'lib/module.can',
       'lib/can.can',
     ]
@@ -31,6 +32,7 @@
       'src/bindings.cc',
       'src/bindings/fs.cc',
       'src/bindings/buffer.cc',
+      'src/bindings/tcp.cc',
 
       '<@(library_files)',
       '<(SHARED_INTERMEDIATE_DIR)/can_natives.h',
