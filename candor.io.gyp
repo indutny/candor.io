@@ -14,7 +14,7 @@
     'dependencies': [
       'deps/candor/candor.gyp:candor',
       'deps/uv/uv.gyp:libuv',
-      'can2c_scripts'
+      'can2c_scripts#host'
     ],
     'include_dirs': [
       'deps/candor/include',
@@ -40,14 +40,16 @@
     ]
   }, {
     'target_name': 'can2c',
+    'toolsets': [ 'host' ],
     'type': 'executable',
     'sources': [
       'tools/can2c.cc'
     ],
   }, {
     'target_name': 'can2c_scripts',
+    'toolsets': [ 'host' ],
     'type': 'none',
-    'dependencies': [ 'can2c' ],
+    'dependencies': [ 'can2c#host' ],
     'actions': [{
       'action_name': 'can2c',
       'inputs': [
