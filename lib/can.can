@@ -1,6 +1,28 @@
 // Main binding
 process = global.process
-require = global.require
+compile = global.compile
+buffer = global._bindings.buffer
+fs = global._natives.fs
+
+// require('lib')
+cache = clone global._natives
+require = global.require = (filename) {
+  if (cache[filename]) return cache[filename]
+
+  content = buffer.stringify(fs.readFileSync(filename) ||
+                             fs.readFileSync(filename + '.can'))
+  content = 'return (require, module, exports) {\n' + content + '\n}'
+
+  module = {}
+  module.exports = cache[filename] = {}
+
+  compile(
+    filename,
+    content
+  )()(global.require, module, module.exports)
+
+  return module.exports
+}
 
 // Load first argument
 if (process.argc > 1) require(process.argv[1])

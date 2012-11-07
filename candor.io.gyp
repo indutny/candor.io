@@ -4,7 +4,6 @@
       'lib/events.can',
       'lib/fs.can',
       'lib/tcp.can',
-      'lib/module.can',
       'lib/can.can',
     ]
   },
