@@ -45,6 +45,7 @@ class Buffer : public candor::CWrapper {
   static candor::Value* Stringify(uint32_t argc, candor::Value** argv);
   static candor::Value* Slice(uint32_t argc, candor::Value** argv);
   static candor::Value* Concat(uint32_t argc, candor::Value** argv);
+  static candor::Value* HasInstance(uint32_t argc, candor::Value** value);
 
   bool allocated_;
   char* data_;

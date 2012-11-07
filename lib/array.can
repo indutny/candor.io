@@ -1,0 +1,42 @@
+exports = {}
+
+exports.push = (arr, items...) {
+  while (i < sizeof items) {
+    arr[sizeof arr] = items[i++]
+  }
+
+  return sizeof arr
+}
+
+exports.pop = (arr) {
+  index = sizeof arr - 1
+  item = arr[index]
+  delete arr[index]
+
+  return item
+}
+
+exports.slice = (arr, begin, end) {
+  res = []
+  len = sizeof arr
+
+  if (len < begin) return res
+
+  if (!end) end = len
+  i = 0
+  while (begin < end) {
+    res[i++] = arr[begin++]
+  }
+
+  return res
+}
+
+exports.forEach = (arr, cb) {
+  len = sizeof arr
+  while (i < len) {
+    cb(arr[i], i, arr)
+    i++
+  }
+}
+
+return exports

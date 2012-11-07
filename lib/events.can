@@ -1,5 +1,6 @@
 // EventEmitter
 exports = {}
+array = global._natives.array
 
 EventEmitter = exports.EventEmitter = {}
 
@@ -9,18 +10,16 @@ EventEmitter.init = (self) {
 
 EventEmitter.on = (self, event, listener) {
   if (!self._listeners[event]) self._listeners[event] = []
-  listeners = self._listeners[event]
 
-  listeners[sizeof listeners] = listener
+  array.push(self._listeners[event], listener)
 }
 
 EventEmitter.emit = (self, event, args...) {
-  i = 0
   listeners = self._listeners[event]
-  while (i < sizeof listeners) {
-    listeners[i](args...)
-    i++
-  }
+
+  array.forEach(listeners, (listener) {
+    listener(args...)
+  })
 
   return sizeof listeners
 }

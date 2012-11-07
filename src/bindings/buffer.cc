@@ -119,12 +119,19 @@ Value* Buffer::Concat(uint32_t argc, Value** argv) {
 }
 
 
+Value* Buffer::HasInstance(uint32_t argc, Value** value) {
+  if (argc < 1) return Nil::New();
+  return Boolean::New(HasInstance(value[0]));
+}
+
+
 void Buffer::Init(Object* target) {
   target->Set("new", Function::New(Buffer::New));
   target->Set("length", Function::New(Buffer::Length));
   target->Set("stringify", Function::New(Buffer::Stringify));
   target->Set("slice", Function::New(Buffer::Slice));
   target->Set("concat", Function::New(Buffer::Concat));
+  target->Set("hasInstance", Function::New(Buffer::HasInstance));
 }
 
 } // namespace can
