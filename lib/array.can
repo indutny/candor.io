@@ -39,4 +39,18 @@ exports.forEach = (arr, cb) {
   }
 }
 
+exports.concat = (arrs...) {
+  res = []
+  k = 0
+  i = 0
+  while (i < sizeof arrs) {
+    j = 0
+    while (j < sizeof arrs[i]) {
+      res[key++] = arrs[i][j++]
+    }
+    i++
+  }
+  return res
+}
+
 return exports
